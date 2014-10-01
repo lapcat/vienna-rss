@@ -2530,8 +2530,8 @@ static void MyScriptsFolderWatcherCallBack(FNMessage message, OptionBits flags, 
 		}
 		[self openURLs:urls inPreferredBrowser:usePreferredBrowser];
 		
-		if (![db readOnly])
-            [articleController markReadByArray:articlesWithLinks readFlag:YES];
+		/*if (![db readOnly])
+            [articleController markReadByArray:articlesWithLinks readFlag:YES];*/
 	}
 }
 
