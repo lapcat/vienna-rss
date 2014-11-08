@@ -67,19 +67,15 @@
 			
 			// Now extract the source parameter
 			NSString * srcPath = [self substringWithRange:srcRange];
-			if (![srcPath hasPrefix:@"http"] && ![srcPath hasPrefix:@"data:"])
+			if (![srcPath hasPrefix:@"http:"] && ![srcPath hasPrefix:@"https:"] && ![srcPath hasPrefix:@"data:"])
 			{
-				NSString * escapedSrcPath = [srcPath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-				if (escapedSrcPath != nil)
-				{
-					NSURL * imgURL = [NSURL URLWithString:escapedSrcPath relativeToURL:imgBaseURL];
-					if (imgURL != nil)
-					{
-						srcPath = [imgURL absoluteString];
-						[self replaceCharactersInRange:srcRange withString:srcPath];
-						textLength = [self length];
-					}
-				}
+                NSURL * imgURL = [NSURL URLWithString:srcPath relativeToURL:imgBaseURL];
+                if (imgURL != nil)
+                {
+                    srcPath = [imgURL absoluteString];
+                    [self replaceCharactersInRange:srcRange withString:srcPath];
+                    textLength = [self length];
+                }
 			}
 			
 			// Start searching again from beyond the URL
@@ -125,19 +121,15 @@
 
 			// Now extract the source parameter
 			NSString * srcPath = [self substringWithRange:srcRange];
-			if (![srcPath hasPrefix:@"http"] && ![srcPath hasPrefix:@"#"])
+			if (![srcPath hasPrefix:@"http:"] && ![srcPath hasPrefix:@"https:"] && ![srcPath hasPrefix:@"#"])
 			{
-				NSString * escapedSrcPath = [srcPath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-				if (escapedSrcPath != nil)
-				{
-					NSURL * anchorURL = [NSURL URLWithString:escapedSrcPath relativeToURL:anchorBaseURL];
-					if (anchorURL != nil)
-					{
-						srcPath = [anchorURL absoluteString];
-						[self replaceCharactersInRange:srcRange withString:srcPath];
-						textLength = [self length];
-					}
-				}
+                NSURL * anchorURL = [NSURL URLWithString:srcPath relativeToURL:anchorBaseURL];
+                if (anchorURL != nil)
+                {
+                    srcPath = [anchorURL absoluteString];
+                    [self replaceCharactersInRange:srcRange withString:srcPath];
+                    textLength = [self length];
+                }
 			}
 
 			// Start searching again from beyond the URL
@@ -183,19 +175,15 @@
 
 			// Now extract the source parameter
 			NSString * srcPath = [self substringWithRange:srcRange];
-			if (![srcPath hasPrefix:@"http"])
+			if (![srcPath hasPrefix:@"http:"] && ![srcPath hasPrefix:@"https:"])
 			{
-				NSString * escapedSrcPath = [srcPath stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-				if (escapedSrcPath != nil)
-				{
-					NSURL * iframeURL = [NSURL URLWithString:escapedSrcPath relativeToURL:imgBaseURL];
-					if (iframeURL != nil)
-					{
-						srcPath = [iframeURL absoluteString];
-						[self replaceCharactersInRange:srcRange withString:srcPath];
-						textLength = [self length];
-					}
-				}
+                NSURL * iframeURL = [NSURL URLWithString:srcPath relativeToURL:imgBaseURL];
+                if (iframeURL != nil)
+                {
+                    srcPath = [iframeURL absoluteString];
+                    [self replaceCharactersInRange:srcRange withString:srcPath];
+                    textLength = [self length];
+                }
 			}
 
 			// Start searching again from beyond the URL

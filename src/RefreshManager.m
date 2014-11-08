@@ -87,6 +87,7 @@ static RefreshManager * _refreshManager = nil;
 		[nc addObserver:self selector:@selector(handleWillDeleteFolder:) name:@"MA_Notify_WillDeleteFolder" object:nil];
 		[nc addObserver:self selector:@selector(handleChangeConcurrentDownloads:) name:@"MA_Notify_CowncurrentDownloadsChange" object:nil];
 		_queue = dispatch_queue_create("uk.co.opencommunity.vienna2.refresh", NULL);
+		hasStarted = NO;
 	}
 	return self;
 }
@@ -97,19 +98,23 @@ static RefreshManager * _refreshManager = nil;
 
 - (void)nqQueueDidFinishSelector:(ASIHTTPRequest *)request {
 	[[NSNotificationCenter defaultCenter] postNotificationOnMainThreadWithName:@"MA_Notify_ArticleListStateChange" object:nil];
-	[[NSNotificationCenter defaultCenter] postNotificationOnMainThreadWithName:@"MA_Notify_RefreshStatus" object:nil];
+	if (hasStarted)
+	{
+		[[NSNotificationCenter defaultCenter] postNotificationOnMainThreadWithName:@"MA_Notify_RefreshStatus" object:nil];
+		hasStarted = NO;
+	}
 	LLog(@"Queue empty!!!");
 }
 
 - (void)nqRequestFinished:(ASIHTTPRequest *)request {
 	statusMessageDuringRefresh = [NSString stringWithFormat:@"%@: (%i) - %@",NSLocalizedString(@"Queue",nil),[networkQueue requestsCount],NSLocalizedString(@"Refreshing subscriptions...", nil)];
-	[[NSApp delegate] setStatusMessage:[self statusMessageDuringRefresh] persist:YES];
+	[APPCONTROLLER setStatusMessage:[self statusMessageDuringRefresh] persist:YES];
 	LLog(@"Removed queue: %d", [networkQueue requestsCount]);
 }
 
 - (void)nqRequestStarted:(ASIHTTPRequest *)request {
 	statusMessageDuringRefresh = [NSString stringWithFormat:@"%@: (%i) - %@",NSLocalizedString(@"Queue",nil),[networkQueue requestsCount],NSLocalizedString(@"Refreshing subscriptions...", nil)];
-	[[NSApp delegate] setStatusMessage:[self statusMessageDuringRefresh] persist:YES];
+	[APPCONTROLLER setStatusMessage:[self statusMessageDuringRefresh] persist:YES];
 	LLog(@"Added queue: %d", [networkQueue requestsCount]);
 
 }
@@ -252,7 +257,9 @@ static RefreshManager * _refreshManager = nil;
 			[self refreshFolderIconCacheForSubscriptions:[[Database sharedDatabase] arrayOfFolders:[folder itemId]]];
 		else if (IsRSSFolder(folder) || IsGoogleReaderFolder(folder))
 		{
-			[self performSelectorOnMainThread:@selector(refreshFavIcon:) withObject:folder waitUntilDone:NO];
+			dispatch_async(dispatch_get_main_queue(), ^{
+				[self refreshFavIcon:folder];
+			});
 		}
 	}
 }
@@ -445,7 +452,7 @@ static RefreshManager * _refreshManager = nil;
 	
 	// Additional detail for the log
 	if (IsGoogleReaderFolder(folder)) {
-		[aItem appendDetail:[NSString stringWithFormat:NSLocalizedString(@"Connecting to Open Reader to retrieve %@", nil), urlString]];
+		[aItem appendDetail:[NSString stringWithFormat:NSLocalizedString(@"Connecting to Open Reader server to retrieve %@", nil), urlString]];
 	} else {
 		[aItem appendDetail:[NSString stringWithFormat:NSLocalizedString(@"Connecting to %@", nil), urlString]];
 	}
@@ -461,6 +468,12 @@ static RefreshManager * _refreshManager = nil;
  */
 -(void)refreshFeed:(Folder *)folder fromURL:(NSURL *)url withLog:(ActivityItem *)aItem shouldForceRefresh:(BOOL)force
 {	
+	if (!hasStarted)
+	{
+			[[NSNotificationCenter defaultCenter] postNotificationOnMainThreadWithName:@"MA_Notify_RefreshStatus" object:nil];
+			hasStarted = YES;
+	}
+
 	ASIHTTPRequest *myRequest;
 	
 	if (IsRSSFolder(folder)) {
@@ -510,7 +523,7 @@ static RefreshManager * _refreshManager = nil;
 	[self setFolderErrorFlag:folder flag:YES];
 	[aItem appendDetail:[NSString stringWithFormat:@"%@ %@",NSLocalizedString(@"Error retrieving RSS feed:", nil),[[request error] localizedDescription ]]];
 	[aItem setStatus:NSLocalizedString(@"Error",nil)];
-	[self performSelectorOnMainThread:@selector(syncFinishedForFolder:) withObject:folder waitUntilDone:NO];
+	[self syncFinishedForFolder:folder];
 }
 
 /* pumpFolderIconRefresh
@@ -590,13 +603,13 @@ static RefreshManager * _refreshManager = nil;
 
 - (void)syncFinishedForFolder:(Folder *)folder 
 {
-    AppController *controller = [NSApp delegate];
-    
-    // Unread count may have changed
-    [controller setStatusMessage:nil persist:NO];
-    [controller showUnreadCountOnApplicationIconAndWindowTitle];
-    
     [self setFolderUpdatingFlag:folder flag:NO];
+    dispatch_async(dispatch_get_main_queue(), ^{
+		// Unread count may have changed
+		AppController *controller = APPCONTROLLER;
+		[controller setStatusMessage:nil persist:NO];
+		[controller showUnreadCountOnApplicationIconAndWindowTitle];
+	});
 }
 
 /* folderRefreshRedirect
@@ -668,7 +681,7 @@ static RefreshManager * _refreshManager = nil;
 		[self setFolderErrorFlag:folder flag:NO];
 		[connectorItem appendDetail:NSLocalizedString(@"Got HTTP status 304 - No news from last check", nil)];
 		[connectorItem setStatus:NSLocalizedString(@"No new articles available", nil)];
-		[self performSelectorOnMainThread:@selector(syncFinishedForFolder:) withObject:folder waitUntilDone:NO];
+		[self syncFinishedForFolder:folder];
 		return;
 	}
 	else if (isCancelled) 
@@ -712,9 +725,9 @@ static RefreshManager * _refreshManager = nil;
 		[self setFolderErrorFlag:folder flag:YES];
 	}
 
-	[self performSelectorOnMainThread:@selector(syncFinishedForFolder:) withObject:folder waitUntilDone:NO];
+	[self syncFinishedForFolder:folder];
 
-	}); //block for dispatch_async
+	}); //block for dispatch_async on _queue
 };
 
 -(void)finalizeFolderRefresh:(NSDictionary*)parameters;
@@ -807,6 +820,10 @@ static RefreshManager * _refreshManager = nil;
 			NSMutableArray * articleArray = [NSMutableArray array];
 			NSMutableArray * articleGuidArray = [NSMutableArray array];
 			
+			NSDate * itemAlternativeDate = [newFeed lastModified];
+			if (itemAlternativeDate == nil)
+				itemAlternativeDate = [NSDate date];
+
 			// Parse off items.
 			
 			for (FeedItem * newsItem in [newFeed items])
@@ -830,16 +847,22 @@ static RefreshManager * _refreshManager = nil;
 				NSUInteger articleIndex = [articleGuidArray indexOfObject:articleGuid];
 				if (articleIndex != NSNotFound)
 				{
-					if (articleDate == nil)
-						continue; // Skip this duplicate article
-					
 					// rebuild a complex guid which should eliminate most duplicates
-					articleGuid = [NSString stringWithFormat:@"%ld-%@-%@-%@", folderId, [NSString stringWithFormat:@"%1.3f", [articleDate timeIntervalSince1970]], [newsItem link], [newsItem title]];
+					if (articleDate == nil)
+						articleGuid = [NSString stringWithFormat:@"%ld-%@-%@", folderId, [newsItem link], [newsItem title]];
+					else
+						articleGuid = [NSString stringWithFormat:@"%ld-%@-%@-%@", folderId, [NSString stringWithFormat:@"%1.3f", [articleDate timeIntervalSince1970]], [newsItem link], [newsItem title]];
 				}
 				[articleGuidArray addObject:articleGuid];
 				
+				// set the article date if it is missing. We'll use the
+				// last modified date of the feed and set each article to be 1 second older than the
+				// previous one. So the array is effectively newest first.
 				if (articleDate == nil)
-					articleDate = [NSDate date];
+				{
+					articleDate = itemAlternativeDate;
+					itemAlternativeDate = [itemAlternativeDate dateByAddingTimeInterval:-1.0];
+				}
 				
 				Article * article = [[[Article alloc] initWithGuid:articleGuid] autorelease];
 				[article setFolderId:folderId];
@@ -1038,7 +1061,6 @@ static RefreshManager * _refreshManager = nil;
 		if ([networkQueue requestsCount] == 1) // networkQueue is NOT YET started
 		{
 			countOfNewArticles = 0;
-			[[NSNotificationCenter defaultCenter] postNotificationOnMainThreadWithName:@"MA_Notify_RefreshStatus" object:nil];
 			[networkQueue go];
 		}
 	}

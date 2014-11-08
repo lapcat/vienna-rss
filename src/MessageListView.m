@@ -19,6 +19,7 @@
 //
 
 #import "MessageListView.h"
+#import "AppController.h"
 
 @interface NSObject(MessageListViewDelegate)
 	-(BOOL)handleKeyDown:(unichar)keyChar withFlags:(NSUInteger )flags;
@@ -38,7 +39,7 @@
 	if ([[theEvent characters] length] == 1)
 	{
 		unichar keyChar = [[theEvent characters] characterAtIndex:0];
-		if ([(id)[NSApp delegate] handleKeyDown:keyChar withFlags:[theEvent modifierFlags]])
+		if ([APPCONTROLLER handleKeyDown:keyChar withFlags:[theEvent modifierFlags]])
 			return;
 	}
 	[super keyDown:theEvent];
@@ -68,7 +69,7 @@
  */
 -(IBAction)delete:(id)sender
 {
-	[[NSApp delegate] deleteMessage:self];
+	[APPCONTROLLER deleteMessage:self];
 }
 
 /* validateMenuItem

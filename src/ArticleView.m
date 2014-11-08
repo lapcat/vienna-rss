@@ -248,10 +248,10 @@ static NSMutableDictionary * stylePathMappings = nil;
 	// Reset current html string.
 	if (currentHTML != nil)
 		[currentHTML release];
-	currentHTML = [[NSString alloc] initWithString: @"<HTML></HTML>"];
+	currentHTML = [[NSString alloc] initWithString: @""];
 	
 	// Load a blank HTML page.
-	NSString * htmlText = @"<HTML></HTML>";
+	NSString * htmlText = @"";
 	[[self mainFrame] loadHTMLString:htmlText
 					   baseURL:[NSURL URLWithString:@""]];
 }
@@ -289,7 +289,7 @@ static NSMutableDictionary * stylePathMappings = nil;
 	if ([[theEvent characters] length] == 1)
 	{
 		unichar keyChar = [[theEvent characters] characterAtIndex:0];
-		if ([[NSApp delegate] handleKeyDown:keyChar withFlags:[theEvent modifierFlags]])
+		if ([APPCONTROLLER handleKeyDown:keyChar withFlags:[theEvent modifierFlags]])
 			return;
 		
 		//Don't go back or forward in article view.
@@ -363,7 +363,7 @@ static NSMutableDictionary * stylePathMappings = nil;
 {
 	int navType = [[actionInformation valueForKey:WebActionNavigationTypeKey] intValue];
 	if ((navType == WebNavigationTypeLinkClicked) && ([[Preferences standardPreferences] openLinksInBackground] || ![[Preferences standardPreferences] openLinksInVienna]))
-		[[NSApp mainWindow] makeFirstResponder:[[[[NSApp delegate] browserView] primaryTabItemView] mainView]];
+		[[NSApp mainWindow] makeFirstResponder:[[[APPCONTROLLER browserView] primaryTabItemView] mainView]];
 	
 	[super webView:sender decidePolicyForNewWindowAction:actionInformation request:request newFrameName:frameName decisionListener:listener];
 }
@@ -387,7 +387,7 @@ static NSMutableDictionary * stylePathMappings = nil;
 	
 	int navType = [[actionInformation valueForKey:WebActionNavigationTypeKey] intValue];
 	if ((navType == WebNavigationTypeLinkClicked) && ([[Preferences standardPreferences] openLinksInBackground] || ![[Preferences standardPreferences] openLinksInVienna]))
-		[[NSApp mainWindow] makeFirstResponder:[[[[NSApp delegate] browserView] primaryTabItemView] mainView]];
+		[[NSApp mainWindow] makeFirstResponder:[[[APPCONTROLLER browserView] primaryTabItemView] mainView]];
 	
 	[super webView:sender decidePolicyForNavigationAction:actionInformation request:request frame:frame decisionListener:listener];
 }	

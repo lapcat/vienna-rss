@@ -210,7 +210,7 @@ static NSLocale * enUSLocale;
 	// Set the delegates and title
 	[mainWindow setDelegate:self];
 	[mainWindow setTitle:[self appName]];
-	[NSApp setDelegate:self];
+	[[NSApplication sharedApplication] setDelegate:self];
 	[mainWindow setMinSize: NSMakeSize(MA_Default_Main_Window_Min_Width, MA_Default_Main_Window_Min_Height)];
 	
 	// Initialise the plugin manager now that the UI is ready
@@ -327,7 +327,7 @@ static void MySleepCallBack(void * refCon, io_service_t service, natural_t messa
 {
 	if (messageType == kIOMessageSystemHasPoweredOn)
 	{
-		AppController * app = (AppController *)[NSApp delegate];
+		AppController * app = APPCONTROLLER;
 		Preferences * prefs = [Preferences standardPreferences];
 		int frequency = [prefs refreshFrequency];
 		if (frequency > 0)
@@ -2193,6 +2193,8 @@ static void MyScriptsFolderWatcherCallBack(FNMessage message, OptionBits flags, 
             [statusBarImage setTemplate:YES];
             [appStatusItem setImage:statusBarImage];
 			[appStatusItem setTitle:[NSString stringWithFormat:@"%u", lastCountOfUnread]];
+			// Yosemite hack : need to insist for displaying correctly icon and text
+            [appStatusItem setImage:statusBarImage];
 		}
 	}
 }
@@ -2900,11 +2902,14 @@ static void MyScriptsFolderWatcherCallBack(FNMessage message, OptionBits flags, 
 		if (folderId != -1)
 		{
 			[foldersTree selectFolder:folderId];
-			if (isAccessible(urlString))
+            if (isAccessible(urlString))
 			{
 				Folder * folder = [db folderFromID:folderId];
 				[[RefreshManager sharedManager] refreshSubscriptionsAfterSubscribe:[NSArray arrayWithObject:folder] ignoringSubscriptionStatus:NO];
-			}
+            } else if ([urlString hasPrefix:@"file"]) {
+                Folder * folder = [db folderFromID:folderId];
+                [[RefreshManager sharedManager] refreshSubscriptionsAfterSubscribe:[NSArray arrayWithObject:folder] ignoringSubscriptionStatus:NO];
+            }
 		}
 	}
 }
