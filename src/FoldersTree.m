@@ -886,7 +886,8 @@
 	if (info == nil)
 	{
 		NSMutableParagraphStyle * style = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
-		[style setLineBreakMode:NSLineBreakByTruncatingMiddle];
+		style.lineBreakMode = NSLineBreakByTruncatingTail;
+		style.tighteningFactorForTruncation = 0.0;
 		info = [[NSDictionary alloc] initWithObjectsAndKeys:style, NSParagraphStyleAttributeName, nil];
 		[style release];
 	}
