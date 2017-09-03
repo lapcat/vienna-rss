@@ -191,16 +191,13 @@
  */
 -(id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSUInteger)rowIndex
 {
-	NSString * identifier = aTableColumn.identifier;
-	if (identifier != nil && identifier.length > 0 )
-	{
-		ActivityItem * item = allItems[rowIndex];
-		return [item valueForKey:identifier];
-	}
-	else
-	{
-		return @"";
-	}
+    NSString *identifier = aTableColumn.identifier;
+    if (identifier.length > 0) {
+        ActivityItem *item = allItems[rowIndex];
+        return [item valueForKey:identifier];
+    } else {
+        return @"";
+    }
 }
 
 /* dealloc
