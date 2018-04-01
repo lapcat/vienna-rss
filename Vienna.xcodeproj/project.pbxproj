@@ -8784,6 +8784,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 43BA97B01664677600B95F35 /* JSONKit-Dev.xcconfig */;
 			buildSettings = {
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 			};
 			name = Development;
@@ -8792,6 +8793,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 43BA97AF1664677600B95F35 /* JSONKit-Dep.xcconfig */;
 			buildSettings = {
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 			};
 			name = Deployment;
@@ -8894,6 +8896,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 43BA97B01664677600B95F35 /* JSONKit-Dev.xcconfig */;
 			buildSettings = {
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 			};
 			name = StaticAnalyzer;
