@@ -291,8 +291,9 @@ static NSMutableDictionary * entityMap = nil;
 		}
 		else if (ch == '>' && isInTag)
 		{
-			if (++tagLength > 2)
+			if (tagLength > 1)
 			{
+				++tagLength; // Include the start tag
 				NSRange tagRange = NSMakeRange(tagStartIndex, tagLength);
 				NSString * tag = [[aString substringWithRange:tagRange] lowercaseString];
 				int indexOfTagName = 1;
@@ -319,6 +320,10 @@ static NSMutableDictionary * entityMap = nil;
 				maxChrs = [aString length];
 				isInTag = NO;
 				isInQuote = NO;	// Fix problem with Tribe.net feeds that have bogus quotes in HTML tags
+			}
+			else if (!isInQuote)
+			{
+				isInTag = NO;
 			}
 		}
 		++indexOfChr;
