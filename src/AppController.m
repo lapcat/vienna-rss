@@ -1226,6 +1226,13 @@ static void MyScriptsFolderWatcherCallBack(FNMessage message, OptionBits flags, 
 									options:lOptions
 			 additionalEventParamDescriptor:NULL
 						  launchIdentifiers:NULL];
+	// Workaround for Google Chrome bug
+	if ([prefs openLinksInBackground])
+	{
+		dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+			[NSApp activateIgnoringOtherApps:YES];
+		});
+	}
 }
 
 /* openURLInDefaultBrowser
