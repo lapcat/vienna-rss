@@ -8,6 +8,9 @@ default:
 release:
 	xcodebuild -project $(PROJECT) -target "Archive and Prep for Upload" -configuration Deployment
 
+deployment:
+	xcodebuild -project $(PROJECT) -target $(TARGET) -configuration Deployment
+
 development:
 	xcodebuild -project $(PROJECT) -target $(TARGET) -configuration Development
 
